@@ -1,0 +1,56 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  SOLUTION_FILE_PATH: .
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Check out main repo
+      uses: actions/checkout@v4.1.4
+
+    - name: Clone routine
+      run: git clone https://github.com/henrypp/routine.git ../routine
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@main
+
+    - name: Build ARM64
+      continue-on-error: true
+      run: msbuild /m /p:Configuration=Release /p:Platform=ARM64 ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build x64
+      continue-on-error: true
+      run: msbuild /m /p:Configuration=Release /p:Platform=x64 ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build x86
+      continue-on-error: true
+      run: msbuild /m /p:Configuration=Release /p:Platform=x86 ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Upload ARM64
+      uses: actions/upload-artifact@v4.3.3
+      with:
+        name: memreduct-ARM64
+        path: ${{env.SOLUTION_FILE_PATH}}/bin/ARM64/*
+
+    - name: Upload x64
+      uses: actions/upload-artifact@v4.3.3
+      with:
+        name: memreduct-x64
+        path: ${{env.SOLUTION_FILE_PATH}}/bin/64/*
+
+    - name: Upload x86
+      uses: actions/upload-artifact@v4.3.3
+      with:
+        name: memreduct-x86
+        path: ${{env.SOLUTION_FILE_PATH}}/bin/32/*
